@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timer App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 300;
+            margin-bottom: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 5px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px 8px;
+            text-align: center;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .tab.active {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .timer-display {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .time {
+            font-size: 4em;
+            font-weight: 200;
+            margin-bottom: 10px;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -2px;
+        }
+
+        .progress-ring {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 30px;
+            position: relative;
+        }
+
+        .progress-ring svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring circle {
+            fill: none;
+            stroke-width: 8;
+        }
+
+        .progress-ring .bg {
+            stroke: rgba(255, 255, 255, 0.2);
+        }
+
+        .progress-ring .progress {
+            stroke: #fff;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.5s ease;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 18px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            backdrop-filter: blur(10px);
+            min-height: 60px;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn.primary {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn.danger {
+            background: rgba(255, 100, 100, 0.3);
+        }
+
+        .timer-mode {
+            display: none;
+        }
+
+        .timer-mode.active {
+            display: block;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .time-input {
+            width: 60px;
+            padding: 12px 8px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .time-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .time-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .label {
+            font-size: 14px;
+            opacity: 0.8;
+            margin: 0 5px;
+        }
+
+        .status {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+
+        .settings {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .volume-slider {
+            width: 100px;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.3);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .laps {
+            max-height: 150px;
+            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .lap {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .lap:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .time {
+                font-size: 3.5em;
+            }
+            
+            .progress-ring {
+                width: 180px;
+                height: 180px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            opacity: 1;
+        }
+
+        .presets-section {
+            margin-bottom: 25px;
+        }
+
+        .presets-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .preset-btn {
+            padding: 8px 12px;
+            min-height: auto;
+            font-size: 18px;
+            border-radius: 8px;
+        }
+
+        .presets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .preset-item {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 8px;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            text-align: center;
+            min-height: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .preset-item:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.05);
+        }
+
+        .preset-item:active {
+            transform: scale(0.95);
+        }
+
+        .preset-item .preset-name {
+            font-size: 11px;
+            opacity: 0.9;
+            margin-bottom: 2px;
+        }
+
+        .preset-item .preset-time {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .preset-item .delete-preset {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: rgba(255, 100, 100, 0.8);
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preset-item:hover .delete-preset {
+            display: flex;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 350px;
+            width: 90%;
+            color: white;
+        }
+
+        .modal h3 {
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 300;
+        }
+
+        .modal .input-group {
+            margin-bottom: 20px;
+        }
+
+        .modal .label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .modal input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 16px;
+        }
+
+        .modal input[type="text"]::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Timer</h1>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-mode="countdown">Countdown</div>
+            <div class="tab" data-mode="stopwatch">Stopwatch</div>
+            <div class="tab" data-mode="pomodoro">Pomodoro</div>
+        </div>
+
+        <!-- Countdown Timer -->
+        <div class="timer-mode active" id="countdown">
+            <div class="presets-section">
+                <div class="presets-header">
+                    <span>Quick Presets</span>
+                    <button class="btn preset-btn" id="countdown-add-preset">+</button>
+                </div>
+                <div class="presets-grid" id="countdown-presets"></div>
+            </div>
+            
+            <div class="input-group">
+                <input type="number" class="time-input" id="countdown-hours" placeholder="0" min="0" max="23">
+                <span class="label">h</span>
+                <input type="number" class="time-input" id="countdown-minutes" placeholder="5" min="0" max="59">
+                <span class="label">m</span>
+                <input type="number" class="time-input" id="countdown-seconds" placeholder="0" min="0" max="59">
+                <span class="label">s</span>
+            </div>
+            
+            <div class="timer-display">
+                <div class="progress-ring">
+                    <svg>
+                        <circle class="bg" cx="100" cy="100" r="90"></circle>
+                        <circle class="progress" cx="100" cy="100" r="90" 
+                                stroke-dasharray="565.48" stroke-dashoffset="565.48"></circle>
+                    </svg>
+                </div>
+                <div class="time" id="countdown-display">05:00</div>
+            </div>
+
+            <div class="controls">
+                <button class="btn primary" id="countdown-start">Start</button>
+                <button class="btn" id="countdown-pause" style="display: none;">Pause</button>
+                <button class="btn danger" id="countdown-reset">Reset</button>
+            </div>
+        </div>
+
+        <!-- Stopwatch -->
+        <div class="timer-mode" id="stopwatch">
+            <div class="timer-display">
+                <div class="time" id="stopwatch-display">00:00</div>
+            </div>
+
+            <div class="controls">
+                <button class="btn primary" id="stopwatch-start">Start</button>
+                <button class="btn" id="stopwatch-pause" style="display: none;">Pause</button>
+                <button class="btn" id="stopwatch-lap">Lap</button>
+                <button class="btn danger" id="stopwatch-reset">Reset</button>
+            </div>
+
+            <div class="laps" id="laps-container" style="display: none;"></div>
+        </div>
+
+        <!-- Pomodoro Timer -->
+        <div class="timer-mode" id="pomodoro">
+            <div class="presets-section">
+                <div class="presets-header">
+                    <span>Pomodoro Presets</span>
+                    <button class="btn preset-btn" id="pomodoro-add-preset">+</button>
+                </div>
+                <div class="presets-grid" id="pomodoro-presets"></div>
+            </div>
+            
+            <div class="status" id="pomodoro-status">Ready for work session</div>
+            
+            <div class="timer-display">
+                <div class="progress-ring">
+                    <svg>
+                        <circle class="bg" cx="100" cy="100" r="90"></circle>
+                        <circle class="progress" cx="100" cy="100" r="90" 
+                                stroke-dasharray="565.48" stroke-dashoffset="565.48"></circle>
+                    </svg>
+                </div>
+                <div class="time" id="pomodoro-display">25:00</div>
+            </div>
+
+            <div class="controls">
+                <button class="btn primary" id="pomodoro-start">Start</button>
+                <button class="btn" id="pomodoro-pause" style="display: none;">Pause</button>
+                <button class="btn danger" id="pomodoro-reset">Reset</button>
+                <button class="btn" id="pomodoro-skip">Skip</button>
+            </div>
+
+            <div class="input-group">
+                <span class="label">Work:</span>
+                <input type="number" class="time-input" id="work-minutes" value="25" min="1" max="60">
+                <span class="label">m</span>
+                <span class="label">Break:</span>
+                <input type="number" class="time-input" id="break-minutes" value="5" min="1" max="30">
+                <span class="label">m</span>
+            </div>
+        </div>
+
+        <div class="settings">
+            <div class="setting-row">
+                <span>Sound Alerts</span>
+                <div class="volume-control">
+                    <button class="btn" id="mute-btn" style="padding: 8px 12px; min-height: auto;">🔊</button>
+                    <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="70">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <!-- Preset Modal -->
+    <div class="modal" id="preset-modal">
+        <div class="modal-content">
+            <h3 id="modal-title">Add Preset</h3>
+            <div class="input-group">
+                <label class="label">Preset Name</label>
+                <input type="text" id="preset-name" placeholder="Enter preset name">
+            </div>
+            <div class="input-group" id="countdown-preset-inputs" style="display: none;">
+                <label class="label">Time</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="number" class="time-input" id="preset-hours" placeholder="0" min="0" max="23">
+                    <span class="label">h</span>
+                    <input type="number" class="time-input" id="preset-minutes" placeholder="5" min="0" max="59">
+                    <span class="label">m</span>
+                    <input type="number" class="time-input" id="preset-seconds" placeholder="0" min="0" max="59">
+                    <span class="label">s</span>
+                </div>
+            </div>
+            <div class="input-group" id="pomodoro-preset-inputs" style="display: none;">
+                <label class="label">Work Time (minutes)</label>
+                <input type="number" class="time-input" id="preset-work-minutes" placeholder="25" min="1" max="120" style="width: 100%;">
+                <label class="label" style="margin-top: 15px;">Break Time (minutes)</label>
+                <input type="number" class="time-input" id="preset-break-minutes" placeholder="5" min="1" max="60" style="width: 100%;">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn" id="modal-cancel">Cancel</button>
+                <button class="btn primary" id="modal-save">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TimerApp {
+            constructor() {
+                this.currentMode = 'countdown';
+                this.timers = {
+                    countdown: { time: 300, totalTime: 300, isRunning: false },
+                    stopwatch: { time: 0, isRunning: false, laps: [] },
+                    pomodoro: { time: 1500, totalTime: 1500, isRunning: false, isWorkSession: true, workTime: 1500, breakTime: 300 }
+                };
+                this.intervalId = null;
+                this.audioContext = null;
+                this.volume = 0.7;
+                this.isMuted = false;
+
+                // Initialize presets
+                this.presets = {
+                    countdown: [
+                        { name: "Quick", hours: 0, minutes: 2, seconds: 0 },
+                        { name: "Break", hours: 0, minutes: 5, seconds: 0 },
+                        { name: "Task", hours: 0, minutes: 15, seconds: 0 },
+                        { name: "Focus", hours: 0, minutes: 30, seconds: 0 },
+                        { name: "Deep", hours: 1, minutes: 0, seconds: 0 }
+                    ],
+                    pomodoro: [
+                        { name: "Classic", workTime: 25, breakTime: 5 },
+                        { name: "Extended", workTime: 45, breakTime: 15 },
+                        { name: "Short", workTime: 15, breakTime: 5 },
+                        { name: "Deep Work", workTime: 90, breakTime: 20 },
+                        { name: "Micro", workTime: 10, breakTime: 2 }
+                    ]
+                };
+
+                this.initializeElements();
+                this.bindEvents();
+                this.initializeAudio();
+                this.renderPresets();
+                this.updateDisplay();
+            }
+
+            initializeElements() {
+                this.tabs = document.querySelectorAll('.tab');
+                this.timerModes = document.querySelectorAll('.timer-mode');
+                
+                // Countdown elements
+                this.countdownInputs = {
+                    hours: document.getElementById('countdown-hours'),
+                    minutes: document.getElementById('countdown-minutes'),
+                    seconds: document.getElementById('countdown-seconds')
+                };
+                this.countdownDisplay = document.getElementById('countdown-display');
+                this.countdownProgress = document.querySelector('#countdown .progress');
+                this.countdownPresets = document.getElementById('countdown-presets');
+                this.countdownAddPreset = document.getElementById('countdown-add-preset');
+                
+                // Stopwatch elements
+                this.stopwatchDisplay = document.getElementById('stopwatch-display');
+                this.lapsContainer = document.getElementById('laps-container');
+                
+                // Pomodoro elements
+                this.pomodoroDisplay = document.getElementById('pomodoro-display');
+                this.pomodoroStatus = document.getElementById('pomodoro-status');
+                this.pomodoroProgress = document.querySelector('#pomodoro .progress');
+                this.workMinutesInput = document.getElementById('work-minutes');
+                this.breakMinutesInput = document.getElementById('break-minutes');
+                this.pomodoroPresets = document.getElementById('pomodoro-presets');
+                this.pomodoroAddPreset = document.getElementById('pomodoro-add-preset');
+                
+                // Controls
+                this.buttons = {
+                    countdown: {
+                        start: document.getElementById('countdown-start'),
+                        pause: document.getElementById('countdown-pause'),
+                        reset: document.getElementById('countdown-reset')
+                    },
+                    stopwatch: {
+                        start: document.getElementById('stopwatch-start'),
+                        pause: document.getElementById('stopwatch-pause'),
+                        lap: document.getElementById('stopwatch-lap'),
+                        reset: document.getElementById('stopwatch-reset')
+                    },
+                    pomodoro: {
+                        start: document.getElementById('pomodoro-start'),
+                        pause: document.getElementById('pomodoro-pause'),
+                        reset: document.getElementById('pomodoro-reset'),
+                        skip: document.getElementById('pomodoro-skip')
+                    }
+                };
+                
+                // Settings
+                this.volumeSlider = document.getElementById('volume-slider');
+                this.muteBtn = document.getElementById('mute-btn');
+                this.notification = document.getElementById('notification');
+
+                // Modal elements
+                this.modal = document.getElementById('preset-modal');
+                this.modalTitle = document.getElementById('modal-title');
+                this.presetNameInput = document.getElementById('preset-name');
+                this.modalCancel = document.getElementById('modal-cancel');
+                this.modalSave = document.getElementById('modal-save');
+                this.countdownPresetInputs = document.getElementById('countdown-preset-inputs');
+                this.pomodoroPresetInputs = document.getElementById('pomodoro-preset-inputs');
+                this.presetInputs = {
+                    hours: document.getElementById('preset-hours'),
+                    minutes: document.getElementById('preset-minutes'),
+                    seconds: document.getElementById('preset-seconds'),
+                    workMinutes: document.getElementById('preset-work-minutes'),
+                    breakMinutes: document.getElementById('preset-break-minutes')
+                };
+            }
+
+            bindEvents() {
+                // Tab switching
+                this.tabs.forEach(tab => {
+                    tab.addEventListener('click', () => this.switchMode(tab.dataset.mode));
+                });
+
+                // Countdown timer events
+                this.buttons.countdown.start.addEventListener('click', () => this.startCountdown());
+                this.buttons.countdown.pause.addEventListener('click', () => this.pauseTimer('countdown'));
+                this.buttons.countdown.reset.addEventListener('click', () => this.resetCountdown());
+
+                // Stopwatch events
+                this.buttons.stopwatch.start.addEventListener('click', () => this.startStopwatch());
+                this.buttons.stopwatch.pause.addEventListener('click', () => this.pauseTimer('stopwatch'));
+                this.buttons.stopwatch.lap.addEventListener('click', () => this.addLap());
+                this.buttons.stopwatch.reset.addEventListener('click', () => this.resetStopwatch());
+
+                // Pomodoro events
+                this.buttons.pomodoro.start.addEventListener('click', () => this.startPomodoro());
+                this.buttons.pomodoro.pause.addEventListener('click', () => this.pauseTimer('pomodoro'));
+                this.buttons.pomodoro.reset.addEventListener('click', () => this.resetPomodoro());
+                this.buttons.pomodoro.skip.addEventListener('click', () => this.skipPomodoro());
+
+                // Settings events
+                this.volumeSlider.addEventListener('input', (e) => {
+                    this.volume = e.target.value / 100;
+                });
+                this.muteBtn.addEventListener('click', () => this.toggleMute());
+
+                // Input events
+                this.workMinutesInput.addEventListener('change', () => this.updatePomodoroSettings());
+                this.breakMinutesInput.addEventListener('change', () => this.updatePomodoroSettings());
+
+                // Preset events
+                this.countdownAddPreset.addEventListener('click', () => this.showPresetModal('countdown'));
+                this.pomodoroAddPreset.addEventListener('click', () => this.showPresetModal('pomodoro'));
+                this.modalCancel.addEventListener('click', () => this.hidePresetModal());
+                this.modalSave.addEventListener('click', () => this.savePreset());
+                
+                // Close modal when clicking outside
+                this.modal.addEventListener('click', (e) => {
+                    if (e.target === this.modal) {
+                        this.hidePresetModal();
+                    }
+                });
+            }
+
+            async initializeAudio() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('Audio not supported');
+                }
+            }
+
+            playSound(frequency = 800, duration = 500) {
+                if (!this.audioContext || this.isMuted) return;
+
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                oscillator.frequency.value = frequency;
+                oscillator.type = 'sine';
+
+                gainNode.gain.setValueAtTime(this.volume * 0.3, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration / 1000);
+
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + duration / 1000);
+            }
+
+            switchMode(mode) {
+                this.currentMode = mode;
+                
+                // Update tabs
+                this.tabs.forEach(tab => {
+                    tab.classList.toggle('active', tab.dataset.mode === mode);
+                });
+                
+                // Update timer modes
+                this.timerModes.forEach(timerMode => {
+                    timerMode.classList.toggle('active', timerMode.id === mode);
+                });
+                
+                this.updateDisplay();
+            }
+
+            startCountdown() {
+                if (!this.timers.countdown.isRunning) {
+                    this.setCountdownTime();
+                    if (this.timers.countdown.time === 0) return;
+                    
+                    this.timers.countdown.isRunning = true;
+                    this.intervalId = setInterval(() => this.updateCountdown(), 1000);
+                    this.toggleButtons('countdown', true);
+                }
+            }
+
+            setCountdownTime() {
+                const hours = parseInt(this.countdownInputs.hours.value) || 0;
+                const minutes = parseInt(this.countdownInputs.minutes.value) || 0;
+                const seconds = parseInt(this.countdownInputs.seconds.value) || 0;
+                
+                const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+                this.timers.countdown.time = totalSeconds;
+                this.timers.countdown.totalTime = totalSeconds;
+            }
+
+            updateCountdown() {
+                if (this.timers.countdown.time > 0) {
+                    this.timers.countdown.time--;
+                    this.updateDisplay();
+                } else {
+                    this.pauseTimer('countdown');
+                    this.playSound(1000, 1000);
+                    this.showNotification('Countdown finished!');
+                }
+            }
+
+            startStopwatch() {
+                if (!this.timers.stopwatch.isRunning) {
+                    this.timers.stopwatch.isRunning = true;
+                    this.intervalId = setInterval(() => this.updateStopwatch(), 100);
+                    this.toggleButtons('stopwatch', true);
+                }
+            }
+
+            updateStopwatch() {
+                this.timers.stopwatch.time += 0.1;
+                this.updateDisplay();
+            }
+
+            addLap() {
+                if (this.timers.stopwatch.isRunning) {
+                    this.timers.stopwatch.laps.push(this.timers.stopwatch.time);
+                    this.updateLapsDisplay();
+                }
+            }
+
+            updateLapsDisplay() {
+                this.lapsContainer.style.display = 'block';
+                this.lapsContainer.innerHTML = '';
+                
+                this.timers.stopwatch.laps.forEach((lapTime, index) => {
+                    const lapDiv = document.createElement('div');
+                    lapDiv.className = 'lap';
+                    lapDiv.innerHTML = `
+                        <span>Lap ${index + 1}</span>
+                        <span>${this.formatTime(lapTime, true)}</span>
+                    `;
+                    this.lapsContainer.appendChild(lapDiv);
+                });
+            }
+
+            startPomodoro() {
+                if (!this.timers.pomodoro.isRunning) {
+                    this.timers.pomodoro.isRunning = true;
+                    this.intervalId = setInterval(() => this.updatePomodoro(), 1000);
+                    this.toggleButtons('pomodoro', true);
+                }
+            }
+
+            updatePomodoro() {
+                if (this.timers.pomodoro.time > 0) {
+                    this.timers.pomodoro.time--;
+                    this.updateDisplay();
+                } else {
+                    this.pauseTimer('pomodoro');
+                    this.playSound(800, 1000);
+                    
+                    if (this.timers.pomodoro.isWorkSession) {
+                        this.showNotification('Work session complete! Time for a break.');
+                        this.timers.pomodoro.isWorkSession = false;
+                        this.timers.pomodoro.time = this.timers.pomodoro.breakTime;
+                        this.timers.pomodoro.totalTime = this.timers.pomodoro.breakTime;
+                    } else {
+                        this.showNotification('Break complete! Ready for work.');
+                        this.timers.pomodoro.isWorkSession = true;
+                        this.timers.pomodoro.time = this.timers.pomodoro.workTime;
+                        this.timers.pomodoro.totalTime = this.timers.pomodoro.workTime;
+                    }
+                    
+                    this.updateDisplay();
+                }
+            }
+
+            skipPomodoro() {
+                if (this.timers.pomodoro.isWorkSession) {
+                    this.timers.pomodoro.isWorkSession = false;
+                    this.timers.pomodoro.time = this.timers.pomodoro.breakTime;
+                    this.timers.pomodoro.totalTime = this.timers.pomodoro.breakTime;
+                } else {
+                    this.timers.pomodoro.isWorkSession = true;
+                    this.timers.pomodoro.time = this.timers.pomodoro.workTime;
+                    this.timers.pomodoro.totalTime = this.timers.pomodoro.workTime;
+                }
+                this.updateDisplay();
+            }
+
+            pauseTimer(mode) {
+                this.timers[mode].isRunning = false;
+                if (this.intervalId) {
+                    clearInterval(this.intervalId);
+                    this.intervalId = null;
+                }
+                this.toggleButtons(mode, false);
+            }
+
+            resetCountdown() {
+                this.pauseTimer('countdown');
+                this.timers.countdown.time = 300;
+                this.timers.countdown.totalTime = 300;
+                this.countdownInputs.minutes.value = '5';
+                this.countdownInputs.hours.value = '';
+                this.countdownInputs.seconds.value = '';
+                this.updateDisplay();
+            }
+
+            resetStopwatch() {
+                this.pauseTimer('stopwatch');
+                this.timers.stopwatch.time = 0;
+                this.timers.stopwatch.laps = [];
+                this.lapsContainer.style.display = 'none';
+                this.updateDisplay();
+            }
+
+            resetPomodoro() {
+                this.pauseTimer('pomodoro');
+                this.timers.pomodoro.isWorkSession = true;
+                this.timers.pomodoro.time = this.timers.pomodoro.workTime;
+                this.timers.pomodoro.totalTime = this.timers.pomodoro.workTime;
+                this.updateDisplay();
+            }
+
+            updatePomodoroSettings() {
+                const workMinutes = parseInt(this.workMinutesInput.value) || 25;
+                const breakMinutes = parseInt(this.breakMinutesInput.value) || 5;
+                
+                this.timers.pomodoro.workTime = workMinutes * 60;
+                this.timers.pomodoro.breakTime = breakMinutes * 60;
+                
+                if (this.timers.pomodoro.isWorkSession) {
+                    this.timers.pomodoro.time = this.timers.pomodoro.workTime;
+                    this.timers.pomodoro.totalTime = this.timers.pomodoro.workTime;
+                } else {
+                    this.timers.pomodoro.time = this.timers.pomodoro.breakTime;
+                    this.timers.pomodoro.totalTime = this.timers.pomodoro.breakTime;
+                }
+                
+                this.updateDisplay();
+            }
+
+            toggleButtons(mode, isRunning) {
+                this.buttons[mode].start.style.display = isRunning ? 'none' : 'block';
+                this.buttons[mode].pause.style.display = isRunning ? 'block' : 'none';
+            }
+
+            toggleMute() {
+                this.isMuted = !this.isMuted;
+                this.muteBtn.textContent = this.isMuted ? '🔇' : '🔊';
+            }
+
+            updateDisplay() {
+                if (this.currentMode === 'countdown') {
+                    this.countdownDisplay.textContent = this.formatTime(this.timers.countdown.time);
+                    this.updateProgress('countdown');
+                } else if (this.currentMode === 'stopwatch') {
+                    this.stopwatchDisplay.textContent = this.formatTime(this.timers.stopwatch.time, true);
+                } else if (this.currentMode === 'pomodoro') {
+                    this.pomodoroDisplay.textContent = this.formatTime(this.timers.pomodoro.time);
+                    this.pomodoroStatus.textContent = this.timers.pomodoro.isWorkSession ? 
+                        'Work Session' : 'Break Time';
+                    this.updateProgress('pomodoro');
+                }
+            }
+
+            updateProgress(mode) {
+                if (mode === 'countdown' || mode === 'pomodoro') {
+                    const timer = this.timers[mode];
+                    const progress = timer.totalTime > 0 ? 
+                        (timer.totalTime - timer.time) / timer.totalTime : 0;
+                    const circumference = 565.48;
+                    const offset = circumference - (progress * circumference);
+                    
+                    const progressElement = mode === 'countdown' ? 
+                        this.countdownProgress : this.pomodoroProgress;
+                    progressElement.style.strokeDashoffset = offset;
+                }
+            }
+
+            formatTime(seconds, includeMilliseconds = false) {
+                if (includeMilliseconds) {
+                    const mins = Math.floor(seconds / 60);
+                    const secs = Math.floor(seconds % 60);
+                    const ms = Math.floor((seconds % 1) * 100);
+                    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+                } else {
+                    const hours = Math.floor(seconds / 3600);
+                    const mins = Math.floor((seconds % 3600) / 60);
+                    const secs = Math.floor(seconds % 60);
+                    
+                    if (hours > 0) {
+                        return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                    } else {
+                        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                    }
+                }
+            }
+
+            showNotification(message) {
+                this.notification.textContent = message;
+                this.notification.classList.add('show');
+                setTimeout(() => {
+                    this.notification.classList.remove('show');
+                }, 3000);
+            }
+
+            // Preset Management Methods
+            renderPresets() {
+                this.renderCountdownPresets();
+                this.renderPomodoroPresets();
+            }
+
+            renderCountdownPresets() {
+                this.countdownPresets.innerHTML = '';
+                this.presets.countdown.forEach((preset, index) => {
+                    const presetEl = document.createElement('button');
+                    presetEl.className = 'preset-item';
+                    presetEl.innerHTML = `
+                        <div class="preset-name">${preset.name}</div>
+                        <div class="preset-time">${this.formatPresetTime(preset.hours, preset.minutes, preset.seconds)}</div>
+                        <button class="delete-preset" data-index="${index}">×</button>
+                    `;
+                    
+                    // Add click handler to the main preset button
+                    presetEl.addEventListener('click', (e) => {
+                        if (!e.target.classList.contains('delete-preset')) {
+                            console.log('Applying countdown preset:', preset);
+                            this.applyCountdownPreset(preset);
+                        }
+                    });
+                    
+                    this.countdownPresets.appendChild(presetEl);
+                });
+                
+                // Add delete handlers after all presets are added
+                this.countdownPresets.querySelectorAll('.delete-preset').forEach((deleteBtn, index) => {
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.deletePreset('countdown', index);
+                    });
+                });
+            }
+
+            renderPomodoroPresets() {
+                this.pomodoroPresets.innerHTML = '';
+                this.presets.pomodoro.forEach((preset, index) => {
+                    const presetEl = document.createElement('button');
+                    presetEl.className = 'preset-item';
+                    presetEl.innerHTML = `
+                        <div class="preset-name">${preset.name}</div>
+                        <div class="preset-time">${preset.workTime}/${preset.breakTime}m</div>
+                        <button class="delete-preset" data-index="${index}">×</button>
+                    `;
+                    
+                    // Add click handler to the main preset button
+                    presetEl.addEventListener('click', (e) => {
+                        if (!e.target.classList.contains('delete-preset')) {
+                            console.log('Applying pomodoro preset:', preset);
+                            this.applyPomodoroPreset(preset);
+                        }
+                    });
+                    
+                    this.pomodoroPresets.appendChild(presetEl);
+                });
+                
+                // Add delete handlers after all presets are added
+                this.pomodoroPresets.querySelectorAll('.delete-preset').forEach((deleteBtn, index) => {
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.deletePreset('pomodoro', index);
+                    });
+                });
+            }
+
+            formatPresetTime(hours, minutes, seconds) {
+                if (hours > 0) {
+                    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                } else if (minutes > 0) {
+                    return seconds > 0 ? `${minutes}:${seconds.toString().padStart(2, '0')}` : `${minutes}m`;
+                } else {
+                    return `${seconds}s`;
+                }
+            }
+
+            applyCountdownPreset(preset) {
+                // Stop any running timer first
+                this.pauseTimer('countdown');
+                
+                // Set input values
+                this.countdownInputs.hours.value = preset.hours || '';
+                this.countdownInputs.minutes.value = preset.minutes || '';
+                this.countdownInputs.seconds.value = preset.seconds || '';
+                
+                // Update the timer
+                const totalSeconds = (preset.hours || 0) * 3600 + (preset.minutes || 0) * 60 + (preset.seconds || 0);
+                this.timers.countdown.time = totalSeconds;
+                this.timers.countdown.totalTime = totalSeconds;
+                
+                console.log('Applied countdown preset:', preset, 'Total seconds:', totalSeconds);
+                
+                // Update display and reset buttons
+                this.updateDisplay();
+                this.toggleButtons('countdown', false);
+                
+                this.showNotification(`Set timer to ${preset.name}`);
+            }
+
+            applyPomodoroPreset(preset) {
+                // Stop any running timer first
+                this.pauseTimer('pomodoro');
+                
+                // Set input values
+                this.workMinutesInput.value = preset.workTime;
+                this.breakMinutesInput.value = preset.breakTime;
+                
+                // Update pomodoro settings
+                this.timers.pomodoro.workTime = preset.workTime * 60;
+                this.timers.pomodoro.breakTime = preset.breakTime * 60;
+                this.timers.pomodoro.isWorkSession = true;
+                this.timers.pomodoro.time = this.timers.pomodoro.workTime;
+                this.timers.pomodoro.totalTime = this.timers.pomodoro.workTime;
+                
+                console.log('Applied pomodoro preset:', preset);
+                
+                // Update display and reset buttons
+                this.updateDisplay();
+                this.toggleButtons('pomodoro', false);
+                
+                this.showNotification(`Set pomodoro to ${preset.name}`);
+            }
+
+            showPresetModal(mode) {
+                this.currentPresetMode = mode;
+                this.modalTitle.textContent = mode === 'countdown' ? 'Add Countdown Preset' : 'Add Pomodoro Preset';
+                
+                // Show appropriate input sections
+                this.countdownPresetInputs.style.display = mode === 'countdown' ? 'block' : 'none';
+                this.pomodoroPresetInputs.style.display = mode === 'pomodoro' ? 'block' : 'none';
+                
+                // Clear previous values
+                this.presetNameInput.value = '';
+                this.presetInputs.hours.value = '';
+                this.presetInputs.minutes.value = '';
+                this.presetInputs.seconds.value = '';
+                this.presetInputs.workMinutes.value = '';
+                this.presetInputs.breakMinutes.value = '';
+                
+                this.modal.classList.add('show');
+            }
+
+            hidePresetModal() {
+                this.modal.classList.remove('show');
+            }
+
+            savePreset() {
+                const name = this.presetNameInput.value.trim();
+                if (!name) {
+                    this.showNotification('Please enter a preset name');
+                    return;
+                }
+
+                if (this.currentPresetMode === 'countdown') {
+                    const hours = parseInt(this.presetInputs.hours.value) || 0;
+                    const minutes = parseInt(this.presetInputs.minutes.value) || 0;
+                    const seconds = parseInt(this.presetInputs.seconds.value) || 0;
+                    
+                    if (hours === 0 && minutes === 0 && seconds === 0) {
+                        this.showNotification('Please set a time greater than 0');
+                        return;
+                    }
+                    
+                    this.presets.countdown.push({ name, hours, minutes, seconds });
+                    this.renderCountdownPresets();
+                } else {
+                    const workTime = parseInt(this.presetInputs.workMinutes.value) || 25;
+                    const breakTime = parseInt(this.presetInputs.breakMinutes.value) || 5;
+                    
+                    this.presets.pomodoro.push({ name, workTime, breakTime });
+                    this.renderPomodoroPresets();
+                }
+
+                this.hidePresetModal();
+                this.showNotification('Preset saved!');
+            }
+
+            deletePreset(mode, index) {
+                this.presets[mode].splice(index, 1);
+                if (mode === 'countdown') {
+                    this.renderCountdownPresets();
+                } else {
+                    this.renderPomodoroPresets();
+                }
+                this.showNotification('Preset deleted');
+            }
+        }
+
+        // Initialize the app when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new TimerApp();
+        });
+
+        // Handle visibility change to continue timers when tab is not active
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                // Resume audio context if needed
+                if (window.timerApp && window.timerApp.audioContext && 
+                    window.timerApp.audioContext.state === 'suspended') {
+                    window.timerApp.audioContext.resume();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
